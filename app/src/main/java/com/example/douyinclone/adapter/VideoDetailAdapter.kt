@@ -30,6 +30,7 @@ class VideoDetailAdapter(
 ) : ListAdapter<VideoItem, VideoDetailAdapter.VideoViewHolder>(VideoDiffCallback()) {
     
     private var currentPlayingHolder: VideoViewHolder? = null
+    private val preloadedHolders = mutableMapOf<Int, VideoViewHolder>()
     
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VideoViewHolder {
         val view = LayoutInflater.from(parent.context)
@@ -44,15 +45,39 @@ class VideoDetailAdapter(
     
     override fun onViewAttachedToWindow(holder: VideoViewHolder) {
         super.onViewAttachedToWindow(holder)
+        val position = holder.bindingAdapterPosition
+        if (position != RecyclerView.NO_POSITION) {
+            preloadedHolders[position] = holder
+        }
         holder.startPlay()
         currentPlayingHolder = holder
+        
+        // 预加载下一个视频
+        preloadNextVideo(position)
     }
     
     override fun onViewDetachedFromWindow(holder: VideoViewHolder) {
         super.onViewDetachedFromWindow(holder)
+        val position = holder.bindingAdapterPosition
+        if (position != RecyclerView.NO_POSITION) {
+            preloadedHolders.remove(position)
+        }
         holder.stopPlay()
         if (currentPlayingHolder == holder) {
             currentPlayingHolder = null
+        }
+    }
+    
+    /**
+     * 预加载下一个视频
+     */
+    private fun preloadNextVideo(currentPosition: Int) {
+        val nextPosition = currentPosition + 1
+        if (nextPosition < itemCount) {
+            // 延迟预加载，避免影响当前视频播放
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                preloadedHolders[nextPosition]?.preloadVideo()
+            }, 500) // 延迟 500ms
         }
     }
     
@@ -218,6 +243,25 @@ class VideoDetailAdapter(
                 
                 // 启动音乐转盘旋转动画
                 startDiscAnimation()
+            }
+        }
+        
+        /**
+         * 预加载视频（准备但不播放）
+         */
+        fun preloadVideo() {
+            currentItem?.let { item ->
+                if (player == null) {
+                    player = ExoPlayer.Builder(itemView.context).build().apply {
+                        playerView.player = this
+                        repeatMode = Player.REPEAT_MODE_ONE
+                        playWhenReady = false // 不自动播放
+                    }
+                    
+                    val mediaItem = MediaItem.fromUri(item.videoUrl)
+                    player?.setMediaItem(mediaItem)
+                    player?.prepare() // 只准备，不播放
+                }
             }
         }
         
