@@ -47,6 +47,17 @@ captures/
 .DS_Store
 Thumbs.db
 
+# ============================
+# Node backend (TrainingCamp/server)
+# ============================
+server/node_modules/
+server/dist/
+server/*.db
+server/*.db-*
+server/npm-debug.log*
+server/.env
+server/.env.*
+
 # Gradle wrapper logs
 gradle-app.setting
 gradlew.bat
