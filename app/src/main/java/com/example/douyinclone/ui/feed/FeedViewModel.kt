@@ -60,6 +60,7 @@ class FeedViewModel @Inject constructor(
                 currentPage = 0
                 val result = repository.getVideos(currentPage)
                 _videos.value = result
+                trackExposureForPage(result, currentPage)
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
@@ -75,6 +76,7 @@ class FeedViewModel @Inject constructor(
                 currentPage = 0
                 val result = repository.refreshVideos()
                 _videos.value = result
+                trackExposureForPage(result, currentPage)
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
@@ -92,8 +94,10 @@ class FeedViewModel @Inject constructor(
                 currentPage++
                 val moreVideos = repository.getVideos(currentPage)
                 val currentList = _videos.value.orEmpty().toMutableList()
+                val startIndex = currentList.size
                 currentList.addAll(moreVideos)
                 _videos.value = currentList
+                trackExposureForPage(moreVideos, currentPage, startIndex)
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
@@ -131,6 +135,22 @@ class FeedViewModel @Inject constructor(
                 }
             }
             _videos.value = currentList
+        }
+    }
+
+    /**
+     * 为当前页的视频打曝光埋点
+     */
+    private fun trackExposureForPage(videos: List<VideoItem>, page: Int, startIndex: Int = 0) {
+        viewModelScope.launch {
+            videos.forEachIndexed { index, video ->
+                val position = startIndex + index
+                repository.trackExposure(
+                    videoId = video.id,
+                    position = position,
+                    scene = "feed_page$page"
+                )
+            }
         }
     }
 }

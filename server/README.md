@@ -28,10 +28,17 @@ npm run dev
   - body: `{ "content": "...", "userId": "current_user", "userName": "我" }`
 - `POST /videos/{id}/like`
   - body: `{ "userId": "current_user" }`
+- `POST /events/exposure`
+  - body: `{ "userId": "u1", "videoId": "video_0", "scene": "feed", "position": 3, "requestId": "req_xxx" }`
+- `POST /events/click`
+  - body: `{ "userId": "u1", "videoId": "video_0", "scene": "feed", "position": 3, "requestId": "req_xxx" }`
+- `POST /events/play`
+  - body: `{ "userId": "u1", "videoId": "video_0", "scene": "detail", "playMs": 8321, "isComplete": false, "requestId": "req_xxx" }`
 
 ### 说明
 
 - 数据已接入 SQLite（`better-sqlite3`），服务重启后数据不会丢。
 - 点赞是 **userId + videoId** 维度，不再是全局开关。
 - 评论接口支持分页并返回 `total`。
+- 已增加事件埋点表 `events`，用于采集曝光/点击/播放行为（后续召回/排序会用到）。
 

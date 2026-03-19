@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
-import { addComment, getComments, getVideos, toggleLike, videoExists } from "./db";
+import { addComment, getComments, getVideos, insertEvent, toggleLike, videoExists } from "./db";
 import { parsePositiveInt, sendError } from "./http";
 
 const app = express();
@@ -23,6 +23,55 @@ app.get("/", (_req, res) => {
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
+});
+
+// POST /events/exposure
+app.post("/events/exposure", (req, res) => {
+  const body = req.body || {};
+  const userId = typeof body.userId === "string" && body.userId.trim() ? body.userId.trim() : "current_user";
+  const videoId = typeof body.videoId === "string" ? body.videoId.trim() : "";
+  const scene = typeof body.scene === "string" ? body.scene.trim() : undefined;
+  const requestId = typeof body.requestId === "string" ? body.requestId.trim() : undefined;
+  const position = typeof body.position === "number" && Number.isFinite(body.position) ? body.position : undefined;
+
+  if (!videoId) return sendError(res, 400, "INVALID_ARGUMENT", "videoId is required");
+  if (!videoExists(videoId)) return sendError(res, 404, "VIDEO_NOT_FOUND", "video not found", { videoId });
+
+  const { id, createTime } = insertEvent({ type: "exposure", userId, videoId, scene, requestId, position });
+  res.status(201).json({ success: true, id, createTime });
+});
+
+// POST /events/click
+app.post("/events/click", (req, res) => {
+  const body = req.body || {};
+  const userId = typeof body.userId === "string" && body.userId.trim() ? body.userId.trim() : "current_user";
+  const videoId = typeof body.videoId === "string" ? body.videoId.trim() : "";
+  const scene = typeof body.scene === "string" ? body.scene.trim() : undefined;
+  const requestId = typeof body.requestId === "string" ? body.requestId.trim() : undefined;
+  const position = typeof body.position === "number" && Number.isFinite(body.position) ? body.position : undefined;
+
+  if (!videoId) return sendError(res, 400, "INVALID_ARGUMENT", "videoId is required");
+  if (!videoExists(videoId)) return sendError(res, 404, "VIDEO_NOT_FOUND", "video not found", { videoId });
+
+  const { id, createTime } = insertEvent({ type: "click", userId, videoId, scene, requestId, position });
+  res.status(201).json({ success: true, id, createTime });
+});
+
+// POST /events/play
+app.post("/events/play", (req, res) => {
+  const body = req.body || {};
+  const userId = typeof body.userId === "string" && body.userId.trim() ? body.userId.trim() : "current_user";
+  const videoId = typeof body.videoId === "string" ? body.videoId.trim() : "";
+  const scene = typeof body.scene === "string" ? body.scene.trim() : undefined;
+  const requestId = typeof body.requestId === "string" ? body.requestId.trim() : undefined;
+  const playMs = typeof body.playMs === "number" && Number.isFinite(body.playMs) ? Math.max(0, body.playMs) : undefined;
+  const isComplete = typeof body.isComplete === "boolean" ? body.isComplete : undefined;
+
+  if (!videoId) return sendError(res, 400, "INVALID_ARGUMENT", "videoId is required");
+  if (!videoExists(videoId)) return sendError(res, 404, "VIDEO_NOT_FOUND", "video not found", { videoId });
+
+  const { id, createTime } = insertEvent({ type: "play", userId, videoId, scene, requestId, playMs, isComplete });
+  res.status(201).json({ success: true, id, createTime });
 });
 
 // GET /videos?user_id=&scene=&page=&page_size=

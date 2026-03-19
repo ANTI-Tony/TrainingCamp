@@ -32,3 +32,37 @@ export interface ApiError {
   details?: unknown;
 }
 
+export type EventType = "exposure" | "click" | "play";
+
+export interface EventBase {
+  id: string;
+  type: EventType;
+  userId: string;
+  videoId: string;
+  createTime: number;
+}
+
+export interface ExposureEvent extends EventBase {
+  type: "exposure";
+  scene?: string;
+  position?: number;
+  requestId?: string;
+}
+
+export interface ClickEvent extends EventBase {
+  type: "click";
+  scene?: string;
+  position?: number;
+  requestId?: string;
+}
+
+export interface PlayEvent extends EventBase {
+  type: "play";
+  scene?: string;
+  requestId?: string;
+  playMs?: number;
+  isComplete?: boolean;
+}
+
+export type Event = ExposureEvent | ClickEvent | PlayEvent;
+

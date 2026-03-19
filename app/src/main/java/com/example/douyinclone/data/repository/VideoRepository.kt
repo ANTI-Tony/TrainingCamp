@@ -2,8 +2,11 @@ package com.example.douyinclone.data.repository
 
 import com.example.douyinclone.data.model.Comment
 import com.example.douyinclone.data.model.VideoItem
-import com.example.douyinclone.data.remote.BackendApiClient
 import com.example.douyinclone.data.remote.AddCommentRequest
+import com.example.douyinclone.data.remote.BackendApiClient
+import com.example.douyinclone.data.remote.ClickEventRequest
+import com.example.douyinclone.data.remote.ExposureEventRequest
+import com.example.douyinclone.data.remote.PlayEventRequest
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -35,5 +38,47 @@ class VideoRepository @Inject constructor() {
     suspend fun likeVideo(videoId: String): Boolean {
         val response = api.likeVideo(videoId)
         return response.success
+    }
+
+    suspend fun trackExposure(videoId: String, position: Int, scene: String = "feed") {
+        runCatching {
+            api.trackExposure(
+                ExposureEventRequest(
+                    videoId = videoId,
+                    scene = scene,
+                    position = position
+                )
+            )
+        }
+    }
+
+    suspend fun trackClick(videoId: String, position: Int, scene: String = "feed") {
+        runCatching {
+            api.trackClick(
+                ClickEventRequest(
+                    videoId = videoId,
+                    scene = scene,
+                    position = position
+                )
+            )
+        }
+    }
+
+    suspend fun trackPlay(
+        videoId: String,
+        playMs: Long?,
+        isComplete: Boolean?,
+        scene: String = "detail"
+    ) {
+        runCatching {
+            api.trackPlay(
+                PlayEventRequest(
+                    videoId = videoId,
+                    scene = scene,
+                    playMs = playMs,
+                    isComplete = isComplete
+                )
+            )
+        }
     }
 }

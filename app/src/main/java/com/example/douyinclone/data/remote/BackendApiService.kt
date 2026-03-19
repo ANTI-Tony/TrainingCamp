@@ -37,6 +37,21 @@ interface BackendApiService {
         @Path("id") videoId: String,
         @Body body: LikeVideoRequest = LikeVideoRequest()
     ): LikeVideoResponse
+
+    @POST("events/exposure")
+    suspend fun trackExposure(
+        @Body body: ExposureEventRequest
+    ): TrackEventResponse
+
+    @POST("events/click")
+    suspend fun trackClick(
+        @Body body: ClickEventRequest
+    ): TrackEventResponse
+
+    @POST("events/play")
+    suspend fun trackPlay(
+        @Body body: PlayEventRequest
+    ): TrackEventResponse
 }
 
 data class VideosResponse(
@@ -64,6 +79,37 @@ data class LikeVideoResponse(
     val success: Boolean,
     val isLiked: Boolean,
     val likeCount: Int
+)
+
+data class ExposureEventRequest(
+    val userId: String = "current_user",
+    val videoId: String,
+    val scene: String? = null,
+    val position: Int? = null,
+    val requestId: String? = null
+)
+
+data class ClickEventRequest(
+    val userId: String = "current_user",
+    val videoId: String,
+    val scene: String? = null,
+    val position: Int? = null,
+    val requestId: String? = null
+)
+
+data class PlayEventRequest(
+    val userId: String = "current_user",
+    val videoId: String,
+    val scene: String? = null,
+    val playMs: Long? = null,
+    val isComplete: Boolean? = null,
+    val requestId: String? = null
+)
+
+data class TrackEventResponse(
+    val success: Boolean,
+    val id: String,
+    val createTime: Long
 )
 
 object BackendApiClient {

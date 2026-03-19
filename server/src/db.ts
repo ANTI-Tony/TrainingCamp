@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 import path from "path";
-import { Comment, VideoItem } from "./types";
+import { Comment, VideoItem, EventType } from "./types";
 
 const DB_PATH = process.env.DB_PATH || path.join(process.cwd(), "dev.db");
 
@@ -45,6 +45,23 @@ CREATE TABLE IF NOT EXISTS likes (
   FOREIGN KEY(videoId) REFERENCES videos(id)
 );
 CREATE INDEX IF NOT EXISTS idx_likes_video ON likes(videoId);
+
+CREATE TABLE IF NOT EXISTS events (
+  id TEXT PRIMARY KEY,
+  type TEXT NOT NULL,
+  userId TEXT NOT NULL,
+  videoId TEXT NOT NULL,
+  scene TEXT,
+  position INTEGER,
+  requestId TEXT,
+  playMs INTEGER,
+  isComplete INTEGER,
+  createTime INTEGER NOT NULL,
+  FOREIGN KEY(videoId) REFERENCES videos(id)
+);
+CREATE INDEX IF NOT EXISTS idx_events_user_time ON events(userId, createTime DESC);
+CREATE INDEX IF NOT EXISTS idx_events_video_time ON events(videoId, createTime DESC);
+CREATE INDEX IF NOT EXISTS idx_events_type_time ON events(type, createTime DESC);
 `);
 
 function seedIfEmpty() {
@@ -244,5 +261,38 @@ export function toggleLike(params: { videoId: string; userId: string }) {
 export function videoExists(videoId: string) {
   const row = db.prepare(`SELECT 1 as ok FROM videos WHERE id = ?`).get(videoId) as { ok: 1 } | undefined;
   return Boolean(row);
+}
+
+export function insertEvent(params: {
+  type: EventType;
+  userId: string;
+  videoId: string;
+  scene?: string;
+  position?: number;
+  requestId?: string;
+  playMs?: number;
+  isComplete?: boolean;
+}) {
+  const now = Date.now();
+  const id = `evt_${now}_${Math.floor(Math.random() * 100000)}`;
+
+  db.prepare(
+    `INSERT INTO events (
+      id, type, userId, videoId, scene, position, requestId, playMs, isComplete, createTime
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    id,
+    params.type,
+    params.userId,
+    params.videoId,
+    params.scene ?? null,
+    params.position ?? null,
+    params.requestId ?? null,
+    params.playMs ?? null,
+    params.isComplete === undefined ? null : params.isComplete ? 1 : 0,
+    now
+  );
+
+  return { id, createTime: now };
 }
 
