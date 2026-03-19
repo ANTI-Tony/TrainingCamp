@@ -89,6 +89,18 @@ class VideoDetailViewModel @Inject constructor(
             likeCurrentVideo()
         }
     }
+
+    fun trackPlayFinished(playMs: Long?, isComplete: Boolean?) {
+        val video = _currentVideo.value ?: return
+        viewModelScope.launch {
+            repository.trackPlay(
+                videoId = video.id,
+                playMs = playMs,
+                isComplete = isComplete,
+                scene = "detail"
+            )
+        }
+    }
     
     fun loadComments() {
         val video = _currentVideo.value ?: return
